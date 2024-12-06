@@ -1,0 +1,961 @@
+# MAIN
+
+#############################################################################################################################################################################################
+#############################################################################################################################################################################################
+
+#############################################################################################################################################################################################
+####################################################################################### PREAMBLE ############################################################################################
+#############################################################################################################################################################################################
+
+LoadPackage( "repsn" );
+
+# Initializing global variables
+alphabet := ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"];
+
+gens_NC:=0;gen:=0;newGens:=0;j:=0;C_to_old:=0;reln:=0;rels_c:=0;c:=0;pres:=0;oldGens_gp:=0;C:=0;imagesOldGens:=0;
+hom_NM:=0;N_hat:=0;hom_NT:=0;F:=0;hom_FT:=0;hom_NF:=0;hom_FN:=0;dim_G:=0;tuple:=0;f:=0;numNewGens:=0;elt:=0;
+gens_stab:=0;d:=0;gens_N:=0;n:=0;DD:=0;D:=0;gen_D:=0;M:=0;G_to_D:=0;gens_G:=0;str_gens_N:=0;str_rels_G:=0;
+location:=0;D_chi:=0;One_times_Dchi:=0;permRep:=0;Dstar_transversal:=0;cart:=0;gens_Dstar:=0;D_star:=0;gens_C:=0;
+cycGen:=0;i:=0;characterIndex:=0;maxRoot:=0;dim_of_irreps:=0;irrep_deg:=0;chars:=0;irreps:=0;irr:=0;gpID:=0;
+dthRootsOfUnity:=0;w0_fin:=0;omega_fin_table:=0;chi_vec:=0;x:=0;sgl:=0;G_chi:=0;G:=0;GG_chi:=0;N:=0;spaceGpData:=[];
+ind_rep:=0;pairUp:=0;principal_sqrt:=0;section:=0;chi:=0;omega_0:=0;omega_0_finitized:=0;omega_0_equalized:=0;factor_set:=0;
+
+#############################################################################################################################################################################################
+#################################################################################### END OF PREAMBLE ########################################################################################
+#############################################################################################################################################################################################
+
+
+#########################################################################################################
+############################################# DATA DISPLAY ##############################################
+#########################################################################################################
+
+	# given a character chi = [ u1, u2, ... ], prints each of the twisted characters
+	#	(x * chi)(g) := chi(x^-1 * g * x), for each x in D
+	display_chi:=function(vector...)
+		local index,twist;
+		
+		if (Size(vector)=0) then
+			vector:=[tuple];
+		fi;
+		
+		for index in [1..Size(DD)] do
+			twist:=DD[index];
+			
+			if (index=1) then
+				Print(Concatenation("(e_G * chi): ",String(List(gens_N,x->chi(x,vector[1])))," -> ",String(List(gens_N,x->chi(x,vector[1]))),"\n"));
+			else
+				Print(Concatenation("(",String(twist)," * chi): ",String(List(gens_N,x->chi(x,vector[1])))," -> ",String(List(gens_N,x->chi(x^twist,vector[1]))),"\n"));
+			fi;
+		od;
+	end;
+
+	display_factor_set:=function()
+		local index,index2,index3,str,Dchi,width;
+		
+		Dchi:=List(D_chi);
+		
+		Print("--------------------","\n");
+		Print("|  a = factor_set  |","\n");
+		
+		str:="|  a(R,C)  |";
+		for index in [1..Size(Dchi)] do
+			if (index = 1) then
+				str:=Concatenation(str,"  e_G","  |  ");
+			else
+				str:=Concatenation(str,String(section(DD,Dchi[index])),"  |  ");
+			fi;
+		od;
+		
+		width:=Length(str)-2;
+		for index in [1..width] do
+			Print("-");
+		od;
+		
+		Print("\n");
+		Print(str,"\n");
+		
+		for index in [1..width] do
+			Print("-");
+		od;
+		
+		Print("\n");
+		
+		for index in [1..Size(Dchi)] do
+			if (index = 1) then
+				str:="|  e_G";
+			else
+				str:=Concatenation("|  ",String(section(DD,Dchi[index])));
+			fi;
+			
+			for index2 in[1..Size(Dchi)] do
+				str:=Concatenation(str,"  |  ",String(Image(hom_NF,factor_set(DD,Dchi[index],Dchi[index2]))));
+			od;
+			Print(Concatenation(str,"  |"),"\n");
+			
+			for index3 in [1..width] do
+				Print("-");
+			od;
+			Print("\n");
+		od;
+	end;
+
+	display_omega0:=function()
+		local index,index2,index3,str,Dchi,width;
+		
+		Dchi:=List(D_chi);
+		
+		str:="|  w0(R,C)  |";
+		for index in [1..Size(Dchi)] do
+			if (index = 1) then
+				str:=Concatenation(str,"  e_G","  |  ");
+			else
+				str:=Concatenation(str,String(section(DD,Dchi[index])),"  |  ");
+			fi;
+		od;
+		
+		width:=Length(str)-2;
+		for index in [1..width] do
+			Print("-");
+		od;
+		
+		Print("\n");
+		Print(str,"\n");
+		
+		for index in [1..width] do
+			Print("-");
+		od;
+		
+		Print("\n");
+		
+		for index in [1..Size(Dchi)] do
+			if (index = 1) then
+				str:="|  e_G";
+			else
+				str:=Concatenation("|  ",String(section(DD,Dchi[index])));
+			fi;
+			
+			for index2 in[1..Size(Dchi)] do
+				str:=Concatenation(str,"  |  ",String(omega_0(Dchi[index],Dchi[index2],chi_vec)));
+			od;
+			Print(Concatenation(str,"  |"),"\n");
+			
+			for index3 in [1..width] do
+				Print("-");
+			od;
+			Print("\n");
+		od;
+	end;
+
+	display_omega0_equalized:=function()
+		local index,index2,index3,str,Dchi,width;
+		
+		Dchi:=List(D_chi);
+		
+		Print("------------------------","\n");
+		Print("|  w0' = w0 Equalized  |","\n");
+		
+		str:="|  w0'(R,C)  |";
+		for index in [1..Size(Dchi)] do
+			if (index = 1) then
+				str:=Concatenation(str,"  e_G","  |  ");
+			else
+				str:=Concatenation(str,String(section(DD,Dchi[index])),"  |  ");
+			fi;
+		od;
+		
+		width:=Length(str)-2;
+		for index in [1..width] do
+			Print("-");
+		od;
+		
+		Print("\n");
+		Print(str,"\n");
+		
+		for index in [1..width] do
+			Print("-");
+		od;
+		
+		Print("\n");
+		
+		for index in [1..Size(Dchi)] do
+			if (index = 1) then
+				str:="|  e_G";
+			else
+				str:=Concatenation("|  ",String(section(DD,Dchi[index])));
+			fi;
+			
+			for index2 in[1..Size(Dchi)] do
+				str:=Concatenation(str,"  |  ",String(omega_0_equalized(Dchi[index],Dchi[index2],chi_vec)));
+			od;
+			Print(Concatenation(str,"  |"),"\n");
+			
+			for index3 in [1..width] do
+				Print("-");
+			od;
+			Print("\n");
+		od;
+	end;
+
+	display_omega0_finitized:=function()
+		local index,index2,index3,str,Dchi,width;
+		
+		Dchi:=List(D_chi);
+		
+		Print("-------------------------","\n");
+		Print("|  w0'' = w0 Finitized  |","\n");
+		
+		str:="|  w0''(R,C)  |";
+		for index in [1..Size(Dchi)] do
+			if (index = 1) then
+				str:=Concatenation(str,"  e_G","  |  ");
+			else
+				str:=Concatenation(str,String(section(DD,Dchi[index])),"  |  ");
+			fi;
+		od;
+		
+		width:=Length(str)-2;
+		for index in [1..width] do
+			Print("-");
+		od;
+		
+		Print("\n");
+		Print(str,"\n");
+		
+		for index in [1..width] do
+			Print("-");
+		od;
+		
+		Print("\n");
+		
+		for index in [1..Size(Dchi)] do
+			if (index = 1) then
+				str:="|  e_G";
+			else
+				str:=Concatenation("|  ",String(section(DD,Dchi[index])));
+			fi;
+			
+			for index2 in[1..Size(Dchi)] do
+				str:=Concatenation(str,"  |  ",String(omega_0_finitized(Dchi[index],Dchi[index2],chi_vec)));
+			od;
+			Print(Concatenation(str,"  |"),"\n");
+			
+			for index3 in [1..width] do
+				Print("-");
+			od;
+			Print("\n");
+		od;
+	end;
+
+	display_omega0_unvectored:=function()
+		local index,index2,index3,str,Dchi,width;
+		
+		Dchi:=List(D_chi);
+		
+		str:="|  w0(R,C)  |";
+		for index in [1..Size(Dchi)] do
+			if (index = 1) then
+				str:=Concatenation(str,"  e_G","  |  ");
+			else
+				str:=Concatenation(str,String(section(DD,Dchi[index])),"  |  ");
+			fi;
+		od;
+		
+		width:=Length(str)-2;
+		for index in [1..width] do
+			Print("-");
+		od;
+		
+		Print("\n");
+		Print(str,"\n");
+		
+		for index in [1..width] do
+			Print("-");
+		od;
+		
+		Print("\n");
+		
+		for index in [1..Size(Dchi)] do
+			if (index = 1) then
+				str:="|  e_G";
+			else
+				str:=Concatenation("|  ",String(section(DD,Dchi[index])));
+			fi;
+			
+			for index2 in[1..Size(Dchi)] do
+				str:=Concatenation(str,"  |  ",String(omega_0(Dchi[index],Dchi[index2],tuple)));
+			od;
+			Print(Concatenation(str,"  |"),"\n");
+			
+			for index3 in [1..width] do
+				Print("-");
+			od;
+			Print("\n");
+		od;
+	end;
+
+	display_data:=function()
+		Print("\n");
+		Print(Concatenation("  chi_vec = ",String(chi_vec)),"\n"); Print("\n");
+		Print("  [  D acting on N-hat  ]","\n");
+		display_chi(); Print("\n");
+		display_factor_set(); Print("\n");
+		display_omega0_unvectored(); Print("\n");
+		display_omega0(); Print("\n");
+		display_omega0_equalized(); Print("\n");
+		display_omega0_finitized(); Print("\n");
+	end;
+
+	p:=function(obj)
+		PrintArray(obj);
+	end;
+
+#########################################################################################################
+############################################### FUNCTIONS ###############################################
+#########################################################################################################
+
+	StringPosition:=function(main_string,substring)
+		local ind1,ind2,length_main,length_sub,found,position;
+
+		length_main := Size(main_string);
+		length_sub := Size(substring);
+
+		for ind1 in [1..length_main - length_sub + 1] do
+			found := true;
+			
+			for ind2 in [1..length_sub] do
+				if (main_string[ind1+ind2-1] <> substring[ind2]) then
+					found := false;
+					break;
+				fi;
+			od;
+			
+			if (found) then
+				return [ind1];
+			fi;
+		od;
+		
+		return [];
+	end;
+
+	ReplaceSubstring:=function(str,old_substr,new_substr)
+		local pos;
+		
+		pos := StringPosition(str, old_substr);
+		while (pos <> []) do
+			str := Concatenation(str{[1..pos[1]-1]}, new_substr, str{[pos[1]+Size(old_substr)..Size(str)]});
+			pos := StringPosition(str, old_substr);
+		od;
+		
+		return str;
+	end;
+
+	# creates a tuple of indeterminates u1,u2,u3,..., one for as many as dimG
+	# 	represents an element of N-hat = Hom(N,T) = T^dimG (where T is a torus)
+	createTorusVector:=function(dimension)
+		local index,indet,tuple;
+		
+		tuple:=[];
+		for index in [1..dimension] do
+			indet:=Indeterminate(Rationals,Concatenation("u",String(index)));
+		
+			Add(tuple,indet);
+		od;
+		
+		return tuple;
+	end;
+
+	# returns the (dim_G+1) x (dim_G+1) homogenized matrix representing translation by <vec>
+	transMat:=function(vec)
+		local matrix,index;
+
+		matrix:=IdentityMat(dim_G+1);
+		for index in [1..dim_G] do
+			matrix[index][dim_G+1]:=vec[index];
+		od;
+		
+		return matrix;
+	end;
+
+	# de-homogenizes a matrix representing translation by <vec>, and returns <vec>
+	transMat_to_vec:=function(matrix)
+		return List([1..dim_G],x->matrix[x][dim_G+1]);
+	end;
+
+	createTranslationMats:=function(dimension)
+		local idMat;
+		
+		idMat:=IdentityMat(dimension);
+		
+		return List([1..dimension],x->transMat(idMat[x]));
+	end;
+
+	decodify:=function(dim,num)
+		local sys,q_class,z_class,numTypes,count,vector;
+		
+		count:=0;
+		for sys in [1..NrCrystalSystems(dim)] do
+			for q_class in [1..NrQClassesCrystalSystem(dim,sys)] do
+				for z_class in [1..NrZClassesQClass(dim,sys,q_class)] do
+					for numTypes in [1..NrSpaceGroupTypesZClass(dim,sys,q_class,z_class)] do
+						count:=count+1;
+						
+						if (count = num) then
+							return [sys,q_class,z_class,numTypes];
+						fi;
+					od;
+				od;
+			od;
+		od;
+		
+		# If group ID is out of bounds, choose gpID = 1.
+		Print("Warning: Group ID exceeded number of crystallographic groups for the given dimension!","\n");
+		return decodify(dim,1);
+	end;
+	
+	space_gp:=function(dim,num)
+		local data;
+		
+		data:=decodify(dim,num);
+	
+		return SpaceGroupOnLeftBBNWZ(dim,data[1],data[2],data[3],data[4]);
+	end;
+
+	# this is the section : D -> G, or the section : D_chi -> D_star, depending on the input
+	# Syntax: section( DD, <elt in D> ) or section( Dstar_transversal, <elt in D_chi> )
+	section:=function(transversal,elt)
+		local x;
+		
+		if (One(transversal) in G) then
+			for x in transversal do
+				if (elt=Image(G_to_D,x)) then
+					return x;
+				fi;
+			od;
+		elif (One(transversal) in D_star) then
+			return Dstar_transversal[Position(One_times_Dchi,[1,elt])];
+		fi;
+	end;
+
+	D_to_GL:=function(elt_in_D)
+		local mat,twist,index;
+
+		twist:=section(DD,elt_in_D);
+		mat:=[];
+		
+		for index in [1..dim_G] do
+			mat:=Concatenation(mat,[transMat_to_vec(Image(hom_NM,gens_N[index]^twist))]); # recall g^h := h * g * h^-1
+		od;
+
+		return TransposedMat(mat);
+	end;
+
+	# takes an element of N, writes it in terms of the generators of N, and simplifies it
+	simplify:=function(elt)
+		local pre,im;
+		
+		if (elt in N) then
+			pre:=Image(hom_NF,elt);
+			im:=Image(hom_FN,pre);
+		
+			return im;
+		fi;
+		
+		return elt;
+	end;
+
+	# chi: N -> N_hat is a character of N, which
+	#	returns chi(g), which equals 0, whenever g is not an element of N
+	#	the codomain of chi is left indeterminately; however, if vector in T^dim_G is specified,
+	#	then chi returns the evaluation of chi(g) at that vector 
+	chi:=function(elt_in_G,vector...)
+		local im;
+		
+		if not(elt_in_G in N) then
+			return 0;
+		fi;
+		
+		im:=Image(hom_NT,simplify(elt_in_G));
+		
+		if (Size(vector) = 0) then
+			return Value(im,tuple,tuple);
+		# elif (Size(vector) = dim_G) then
+			# return Value(im,tuple,vector);
+		fi;
+		
+		return Value(im,tuple,vector[1]);
+	end;
+
+	# chi_star is the extension of chi to domain G_chi
+	chi_star:=function(elt_in_Gchi,vector...)
+		if (Size(vector)=0) then
+			return chi(section(DD,Image(G_to_D,elt_in_Gchi))^-1*elt_in_Gchi,tuple);
+		fi;
+		
+		return chi(section(DD,Image(G_to_D,elt_in_Gchi))^-1*elt_in_Gchi,vector[1]);
+	end;
+
+	# Given a section t : D -> G or t : D_chi -> D*, outputs
+	#	nu : D x D -> N or nu : D_chi x D_chi -> Z_maxRoot,
+	#	defined by nu(h,k) := t(hk)^-1 * t(h) * t(k)
+	factor_set:=function(transversal,elt1,elt2)
+		local cr1,cr2,cr3;	# cr stands for coset representatives
+		
+		cr1:=section(transversal,elt1);
+		cr2:=section(transversal,elt2);
+		cr3:=section(transversal,elt1*elt2);
+
+		return simplify(cr3^-1*cr1*cr2);
+	end;
+
+	# omega_0 : D_chi x D_chi -> T, defined in Kaniuth, p.180
+	omega_0:=function(elt1,elt2,vector...)
+		if (Size(vector)=0) then
+			return chi(factor_set(DD,elt1,elt2),tuple)^-1;
+		fi;
+		
+		return chi(factor_set(DD,elt1,elt2),vector[1])^-1;
+	end;
+
+	# see CST, Proposition 6.15 for details of this implementation
+	omega_0_equalized:=function(elt1,elt2,vector...)
+		return omega_0(elt1,elt2,vector[1])
+				* principal_sqrt(omega_0(elt1*elt2,(elt1*elt2)^-1,vector[1]))
+				*( principal_sqrt(omega_0(elt1,elt1^-1,vector[1]))*principal_sqrt(omega_0(elt2,elt2^-1,vector[1])) )^-1;
+	end;
+
+	# see CST, Proposition 6.19 for details of this implementation
+	omega_0_finitized:=function(elt1,elt2,vector...)
+		local val1,val2,val3;
+		
+		val1:=First(sgl,x->(x[1]=elt1))[2];
+		val2:=First(sgl,x->(x[1]=elt2))[2];
+		val3:=First(sgl,x->(x[1]=elt1*elt2))[2];
+		
+		return omega_0_equalized(elt1,elt2,vector[1])*val1*val2*val3^-1;
+	end;
+
+	# given a cyclotomic number elt, returns [deg,pow], where elt = E(deg)^pow
+	deg_and_pow_of_cyclotomic:=function(elt)
+		local deg,power,cycInt,frac;
+		
+		deg:=Order(elt);
+		cycInt:=E(deg);
+		
+		power:=0;
+		while (cycInt^power <> elt) do
+			power:=power+1;
+		od;
+		
+		return [deg,power];
+	end;
+
+	# Takes the principal square root of a cyclotomic number elt. This is used in the equalization process.
+	principal_sqrt:=function(elt)
+		local data;
+		
+		data:=deg_and_pow_of_cyclotomic(elt);
+		
+		return E(2*data[1])^data[2];
+	end;
+
+	# takes the d-th (d = |D_chi|) root of a cyclotomic number elt, which branch as defined in CST, Proposition 6.19
+	dth_root:=function(elt)
+		local data,ratio,deg,pow;
+		
+		data:=deg_and_pow_of_cyclotomic(elt);
+		deg:=data[1]; pow:=data[2];
+		
+		ratio:=pow/deg;
+		if (ratio > 1/2) then	# if the cyclotomic number is in quadrants III or IV
+			return E(Size(D_chi)*deg)^(deg-pow);
+		fi;
+		
+		# else, the cyclotomic number is in quadrants I or II
+		return E(Size(D_chi)*deg)^(-pow);
+	end;
+
+	# This is rho : D_chi -> T, as defined in CST, Proposition 6.19, used in the finitization process.
+	special_generator:=function(elt,vector)
+		local d,prod;
+		
+		prod:=1;
+		for d in D_chi do
+			prod:=prod*omega_0_equalized(d,elt,vector);
+		od;
+		
+		return prod;
+	end;
+
+	# This is rho' : D_chi -> T, as provided in CST, Proposition 6.19, used in the finitization process.
+	#	The function rho' is written as a list of ordered pairs [x, rho'(x)].
+	special_generator_list:=function(vector)
+		local d,rho,pair,pairs,data;
+		
+		pairs:=pairUp(D_chi);
+		
+		data:=[];
+		for pair in pairs do
+			rho:=special_generator(pair[1],vector);
+		
+			if (Size(pair)=1) then
+				Add(data,[pair[1],1]);
+			elif (rho=-1) then
+				Add(data,[pair[1],E(2*Size(D_chi))^-1]);	# e^(-i*pi/d)
+				Add(data,[pair[2],E(2*Size(D_chi))]);		# e^(i*pi/d)
+			else
+				Add(data,[pair[1],dth_root(rho)]);
+				Add(data,[pair[2],dth_root(rho)^-1]);
+			fi;
+		od;
+		
+		return data;
+	end;
+
+	# returns a list of inverse pairs of group elements, either of the forms [g,g^-1] or [g], if g^2=id
+	pairUp:=function(gp)
+		local d,data;
+		
+		data:=[];
+		for d in gp do
+			if (d^2 = One(gp)) then
+				Add(data,[d]);
+			elif not([d^-1,d] in data) then
+				Add(data,[d,d^-1]);
+			fi;
+		od;
+		
+		return data;
+	end;
+	
+	# As sets D_star = Z_maxRoot x D_chi. The group multiplication is induced by the 2-cocycle w_fin.
+	# Beware of our reversed multiplication convention for permutations in D_star.
+	prod:=function(tup1,tup2)
+		local a1,a2,d1,d2;
+		
+		a1:=tup1[1]; a2:=tup2[1];
+		d1:=tup1[2]; d2:=tup2[2];
+		
+		return [ a1*a2*(First(omega_fin_table,x->x[1]=[d1,d2])[2])^-1, d1*d2 ];
+	end;
+
+	location:=function(tup)
+		return Position( cart, tup );
+	end;
+
+	permRep:=function(tup)
+		# The map permRep : cart -> D_star is a group anti-isomorphism.
+		# Beware of our reversed multiplication convention for permutations.
+		
+		return PermList( List( List( cart, x->prod( tup, x ) ), location ) )^-1;
+	end;
+
+	# Input: an irreducible representation coming from <irreps>
+	# Output: the corresponding irreducible projective w0-representation of D_chi, as defined in CST, Proposition 7.12.
+	# See CST, Remark 7.9(3) for an explanation for multiplying the image by certain factors.
+	# The map cst_Iso : D_chi -> U(V) is an w0-projective anti-representation, i.e.,
+	#	phi(k * h) = w0(h,k) * phi(h) * phi(k), where recall our convention for multiplying permutations in D_chi.
+	cst_Iso:=function(irrep_in_Dstar,elt_in_Dchi)
+		local finitized_factor;
+
+		finitized_factor:=First(sgl,x->(x[1]=elt_in_Dchi))[2];
+
+		return Image(irrep_in_Dstar,section(Dstar_transversal,elt_in_Dchi))
+				*principal_sqrt(omega_0(elt_in_Dchi,elt_in_Dchi^-1,chi_vec))^-1
+				*finitized_factor;
+	end;
+
+	# Input: an irreducible representation coming from <irreps>
+	# Output: the corresponding irreducible representation in (G_chi)^chi, as defined in Kaniuth, Theorem 4.53.
+	# This method outputs the 0 matrix, if elt_in_Gchi is not in G_chi.
+	Gchi_irrep:=function(irrep_in_Dstar,elt_in_Gchi)
+		local dimRep;
+		
+		if not(elt_in_Gchi in G_chi) then
+			dimRep:=Size(Image(irrep_in_Dstar,One(D_star)));
+			
+			return NullMat(dimRep,dimRep);
+		fi;
+
+		return chi_star(elt_in_Gchi,chi_vec) * cst_Iso(irrep_in_Dstar,Image(G_to_D,elt_in_Gchi));
+	end;
+
+				# Verifies that cst_Iso is an w0-projective anti-representation of D_chi,
+				#	i.e., phi(h * k) = w0(h,k)* phi(h) * phi(k).
+				# Remember our convention for multiplying permutations in D_chi!
+				cstIso_is_projRep:=function(irrep)
+					local elt1,elt2,Dchi,img1,img2,img3;
+					
+					Dchi:=List(D_chi);
+					
+					for elt1 in Dchi do
+						img1:=cst_Iso(irrep,elt1);
+					
+						for elt2 in Dchi do
+							img2:=cst_Iso(irrep,elt2);
+							img3:=cst_Iso(irrep,elt1*elt2);
+						
+							if ((img3*img2^-1*img1^-1)[1][1] <> omega_0(elt1,elt2,chi_vec)) then							
+								return false;
+							fi;
+						od;
+					od;
+					
+					return true;
+				end;
+				
+				# verifies that ind_rep(irrep) : G -> U(V) is a bonafide group homomorphism
+				indRep_is_gpHom:=function(irrep)
+					local rels_G,matrix_images,dimRep,idMat,abstract_hom,free_G;
+					
+					free_G:=FreeGroupOfFpGroup(G);
+					rels_G:=RelatorsOfFpGroup(G);
+					
+					matrix_images:=List(gens_G,x->ind_rep(irrep,x));
+
+					abstract_hom:=GroupHomomorphismByImagesNC(free_G,Group(matrix_images));
+					
+					dimRep:=Size(matrix_images[1]);
+					idMat:=IdentityMat(dimRep);
+					
+					return not(false in List(rels_G,(x->Image(abstract_hom,x)=idMat)));
+				end;
+				
+	# ind_rep : G -> U(V) is the induced representation
+	ind_rep:=function(rep_in_Dstar,elt_in_G)
+		local blockList,index1,index2,dimRep;
+		
+		blockList:=[];
+		for index1 in [1..Size(GG_chi)] do
+			for index2 in [1..Size(GG_chi)] do
+				if (G_chi <> N) then
+					Add(blockList,[index1,index2,Gchi_irrep(rep_in_Dstar,GG_chi[index1]^-1*elt_in_G*GG_chi[index2])]);
+				else
+					Add(blockList,[index1,index2,[[ chi(GG_chi[index1]^-1*elt_in_G*GG_chi[index2],chi_vec) ]]]);
+				fi;
+			od;
+		od;
+		
+		return MatrixByBlockMatrix(BlockMatrix(blockList,Size(GG_chi),Size(GG_chi)));
+	end;
+
+#########################################################################################################
+################################################## BODY #################################################
+#########################################################################################################
+
+run:=function( dimension, character, groupID... )
+
+			dim_G := dimension; 																# dimension of the crystallographic group G
+			chi_vec := character;																# chi_vec is a tuple of elements in S^1 of length dim_G	
+			
+			if ( Size( groupID ) = 1 ) then
+				gpID := groupID[1];
+				
+				if ( dim_G <= 3 ) then
+					DisplaySpaceGroupType( dim_G, gpID );
+					C := FpGroupSpaceGroupBBNWZ( SpaceGroupOnLeftBBNWZ( dim_G, gpID ) );		# C is a crystallographic group of dimension dim_G, realized abstractly
+					
+				elif ( dim_G = 4 ) then
+					spaceGpData := decodify( dim_G, gpID );
+					
+					DisplaySpaceGroupType( dim_G, spaceGpData[1], spaceGpData[2], spaceGpData[3], spaceGpData[4] );
+					C := FpGroupSpaceGroupBBNWZ( space_gp( dim_G, gpID ) );
+				fi;
+			elif ( Size( groupID ) = 4 ) then
+				DisplaySpaceGroupType( dim_G, groupID[1], groupID[2], groupID[3], groupID[4] );
+				C := FpGroupSpaceGroupBBNWZ( SpaceGroupOnLeftBBNWZ( dim_G, groupID[1], groupID[2], groupID[3], groupID[4] ) );
+			fi;
+
+	#########################################################################################################	
+
+	gens_C := GeneratorsOfGroup( C );												# Generators of C
+	
+	gens_NC := gens_C{[ (Size(gens_C) - (dim_G-1))..Size(gens_C) ]};				# These are the free abelian generators of the lattice in C. CrystCat positions the
+																					#	generators of N precisely so that they are the latter dim_G generators of C.
+
+	# Using Tietze transformations to simplify the group presentation of C
+	pres := PresentationFpGroup( C );
+	TzInitGeneratorImages( pres ); TzGoGo( pres );
+	
+	
+	imagesOldGens := TzImagesOldGens( pres );										# Writes the redundant generators of C, in terms of only the non-redundant generators
+	oldGens_gp := Group( imagesOldGens );
+
+	C_to_old := GroupHomomorphismByImagesNC( C, oldGens_gp );
+
+
+	c := FpGroupPresentation( pres );												# c = C, but with a simplified presentation 
+
+	newGens := GeneratorsOfGroup( c );
+	numNewGens := Size( newGens );
+	rels_c := RelatorsOfFpGroup( c );
+
+	#########################################################################################################
+	
+	str_rels_G := "";
+	for i in [1..Size(rels_c)] do
+		reln := String( rels_c[i] );
+		
+		for j in [1..numNewGens] do
+			gen := String( newGens[j] );
+			reln := ReplaceSubstring( reln, gen, alphabet[j] );
+		od;
+		
+		if (i = Size(rels_c)) then
+			str_rels_G := Concatenation( str_rels_G, reln );
+		else
+			str_rels_G := Concatenation( str_rels_G, reln, ", " );
+		fi;
+	od;
+
+	str_gens_N := "";
+	for i in [1..Size(gens_NC)] do
+		elt := String( Image( C_to_old, gens_NC[ i ] ) );
+		
+		for j in [1..Size(newGens)] do
+			gen := String( newGens[j] );
+			elt := ReplaceSubstring( elt, gen, alphabet[j] );
+		od;
+		
+		if (i = Size(gens_NC)) then
+			str_gens_N := Concatenation( str_gens_N, elt );
+		else
+			str_gens_N := Concatenation( str_gens_N, elt, ", " );
+		fi;
+	od;
+
+	#########################################################################################################	
+	
+	f := FreeGroup( alphabet{ [ 1..numNewGens ] } );			# f is free group with generators a, b, c,...
+	
+	G := f / ParseRelators( f, str_rels_G );					# G is the abstract group presentation of C, and
+																#	the generators of G are set to a, b, c, etc.
+																
+	N := Subgroup( G, ParseRelators( G, str_gens_N ) );			# N is maximal abelian normal subgroup
+					
+	F := FreeAbelianGroup( dim_G );								# F = Z^dim_G is free abelian group, isomorphic to N
+	
+	
+	D := G / N;													# D = G/N is the point group, viewed as some permutation subgroup
+	DD := RightTransversal( G, N );								# DD is the set of right coset representatives of N in G,
+																#	which is GAP's choice of normalized section D -> G															
+															
+																# 1 -> N -> G -> D -> 1
+
+	
+	gens_G := GeneratorsOfGroup( G );							# list of generators for G, N
+	gens_N := GeneratorsOfGroup( N );
+	
+	G_to_D := NaturalHomomorphismByNormalSubgroup( G, N );		# canonical quotient map from G to D, which is an anti-homomorphism
+	
+	#########################################################################################################
+
+																# tuple of indeterminates [ u1, u2, u3, ... ] - there are dim_G of them,
+	tuple := createTorusVector( dim_G );						#	i.e., the elements of N_hat = Hom(N,T) = T^dim_G, where T = S^1 is the circle group
+	N_hat := Group( tuple );									# making N_hat a group helps produce monomial expressions in the 
+																#	indeterminate variables (and their inverses)
+
+	M := Group( createTranslationMats( dim_G ) );				# M is isomorphic to Z^dim_G, realized as the group of homogenized translation matrices
+	
+	F := FreeAbelianGroup( dim_G );								# F = Z^dim_G is free abelian group of rank dim_G, isomorphic to N
+	
+	hom_FN := GroupHomomorphismByImagesNC( F, N );				# canonical map from F to N
+	hom_NF := GroupHomomorphismByImagesNC( N, F );				# canonical map from N to F
+	hom_FT := GroupHomomorphismByImagesNC( F, N_hat );			# canonical map from F to N_hat
+	hom_NT := GroupHomomorphismByImagesNC( N, N_hat );			# canonical map from N to N_hat
+	hom_NM := GroupHomomorphismByImagesNC( N, M );				# canonical map from N to M
+	
+	#########################################################################################################
+
+	gens_stab := ShallowCopy( gens_N );
+	for gen_D in List(D) do
+		if ( gen_D = ( ) ) then
+			continue;
+		fi;
+	
+		d := section( DD, gen_D );
+		
+		for i in [1..Size(gens_N)] do
+			n := gens_N[i];
+					
+			if ( chi( n, chi_vec ) <> chi( n^(d^-1), chi_vec ) ) then		# recall n^d := d * n * d^-1, where we are defining multiplication of cycles in S_k
+				break;														#	 via function composition, GAP; however, multiplies cycles in reverse
+			elif ( i = Size( gens_N ) ) then
+				Add( gens_stab, d );
+			fi;
+		od;
+	od;
+	
+	# Stabilizer of chi_vec of the action of G (or D) on N_hat
+	G_chi := Group( gens_stab );
+	D_chi := G_chi / N;
+	
+	# this guarantees a left transversal for G/G_chi
+	if ( IsNormal( G, G_chi ) ) then
+		GG_chi := RightTransversal( G, G_chi );
+	else
+		GG_chi := List( RightTransversal( G, G_chi ), x->x^-1 );
+	fi;
+
+	#########################################################################################################
+	
+	# store the values of rho' and omega_0_finitized in lists to facilitate repeated function calls
+	sgl := special_generator_list( chi_vec );	
+	
+	omega_fin_table:=[]; maxRoot:=1;
+	for x in Cartesian(D_chi,D_chi) do
+		w0_fin := omega_0_finitized( x[1], x[2], chi_vec );
+		maxRoot := Maximum( maxRoot, Order( w0_fin ) );		# image of w0_fin are contained in the (maxRoot)-th roots of unity
+		
+		Add( omega_fin_table, [ x, w0_fin ] );
+	od;	
+	dthRootsOfUnity := List( [ 1..maxRoot ], x->E( maxRoot )^(x-1) );
+
+	# cart is the concrete realization of the group D_star
+	cart := Cartesian( dthRootsOfUnity, D_chi );
+	
+	# cycGen is a cyclic generator of Z_maxRoot in D_star
+	cycGen := permRep( [ E( maxRoot ), ( ) ] );
+	
+	# Dstar_transversal is the natural choice of section of the subgroup D_chi of D_star.
+	One_times_Dchi := List( Cartesian( [ 1 ], D_chi ) );
+	Dstar_transversal := List( One_times_Dchi, permRep );
+
+	gens_Dstar := Concatenation( [ cycGen ], Dstar_transversal );
+	
+	# D_star is the permutation representation of cart = Z_maxRoot x D_chi.
+	if ( Size( cart ) > 1 ) then
+		D_star := Group( SmallGeneratingSet( Group( gens_Dstar ) ) );
+	else
+		D_star := Group( ( ) );
+	fi;
+	
+	#########################################################################################################
+
+	chars := Irr( D_star );
+	characterIndex := Position( ConjugacyClasses( D_star ), ConjugacyClass( D_star, cycGen ) );
+	
+	irreps:=[]; dim_of_irreps:=[];
+	for i in [1..Size(chars)] do
+		
+		# degree of the corresponding irreducible representation
+		irrep_deg := chars[ i ][ 1 ];
+		
+		# The images of elements in the center (such as cycGen) must be scalar matrices, in particular,
+		#	the trace must be an integer multiple of the degree of the associated irreducible representation.
+		# See CST, Proposition 7.12 for an explanation for the following restriction.
+		if ( chars[ i ][ characterIndex ] = E( maxRoot ) * irrep_deg ) then
+			Add( dim_of_irreps, irrep_deg );
+			
+			irr := IrreducibleAffordingRepresentation( chars[ i ] );
+			
+			Add( irreps, irr );
+		fi;
+	od;
+
+	#########################################################################################################
+
+end;
+
+#########################################################################################################
+################################################## END ##################################################
+#########################################################################################################
